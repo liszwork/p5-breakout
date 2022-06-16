@@ -63,6 +63,18 @@ class Vec2 {
     let a = this;
     return a.x * b.x + a.y * b.y;
   }
+  /**
+   * 反射ベクトルを求める
+   * @param {number} w 法線ベクトル (大きさは問わない)
+   * @returns 反射ベクトル
+   */
+  reflect(w) {
+    let v = this;
+    let cosTheta = v.mul(-1).dot(w) / (v.mul(-1).mag() * w.mag());
+    let n = w.norm().mul(v.mag() * cosTheta);
+    let r = v.add(n.mul(2));
+    return r;
+  }
 }
 
 class Ball {
@@ -89,10 +101,27 @@ class Block {
   }
 }
 
+class Paddle {
+  /**
+   * @param {Vec2} _p パドルの中心位置ベクトル
+   * @param {number} _r 半径
+   */
+  constructor(_p, _r) {
+    this.p = _p;    // パドルの中心位置ベクトル
+    this.r = _r;    // 半径
+  }
+}
+
 // ボール
 const ball = new Ball(new Vec2(100, 40), new Vec2(120, 60), 10);
+
+// ブロック
 const blocks = [];
 const BLOCK_SPACE = 50;
+
+// パドル
+let paddle = new Paddle(new Vec2(200, 320), 30);
+
 // 点数
 let score = 0;
 
@@ -103,7 +132,7 @@ function setup() {
     let x = 90 * (i % 4) + BLOCK_SPACE;
     let y = 50 * floor(i / 4) + BLOCK_SPACE;
     let p = new Vec2(x, y);
-    blocks.push(new Block(p, 30));
+    blocks.push(new Block(p, 20));
   }
 }
 
@@ -128,25 +157,44 @@ function draw() {
     let d = block.p.sub(ball.p).mag();    // 距離
     if (d < (ball.r + block.r)) {
       // ぶつかっていたらボールの速度を反射
-      let v = ball.v;
       let w = ball.p.sub(block.p);
-      let cosTheta = v.mul(-1).dot(w) / (v.mul(-1).mag() * w.mag());
-      let n = w.norm().mul(v.mag() * cosTheta);
-      let r = v.add(n.mul(2));
+      let r = ball.v.reflect(w);
       ball.v = r;
     }
   }
 
+  // パドルの操作
+  paddle.p.x = mouseX;
+  // ボールとパドルの衝突判定
+  let d = paddle.p.sub(ball.p).mag();    // 距離
+  if (d < (ball.r + paddle.r)) {
+    // ぶつかっていたらボールの速度を反射
+    let w = ball.p.sub(paddle.p);
+    let r = ball.v.reflect(w);
+    ball.v = r;
+    // めりこみ防止
+    ball.p = paddle.p.add(w.norm().mul(ball.r + paddle.r));
+  }
+
+  // 画面塗りつぶし(消去)
   background(220);
+
+  // ボールを描画
   fill('#777');
   stroke('#555');
-  circle(ball.p.x, ball.p.y, 2 * ball.r); // ボールを描画
+  circle(ball.p.x, ball.p.y, 2 * ball.r);
 
+  // ブロックを描画
   fill('#00a')
   stroke('#bbb')
   for (const block of blocks) {
-    circle(block.p.x, block.p.y, 2 * block.r); // ブロックを描画
+    circle(block.p.x, block.p.y, 2 * block.r);
   }
+
+  // パドルを描画
+  fill('#0a0');
+  stroke('#555');
+  circle(paddle.p.x, paddle.p.y, 2 * paddle.r);
 
   text(score, 0, 0, 100, 100);
 }
