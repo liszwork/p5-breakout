@@ -113,7 +113,7 @@ class Paddle {
 }
 
 // ボール
-const ball = new Ball(new Vec2(100, 40), new Vec2(120, 60), 10);
+const ball = new Ball(new Vec2(100, 200), new Vec2(120, 60), 10);
 
 // ブロック
 const blocks = [];
@@ -144,13 +144,11 @@ function draw() {
   // ボールが左右の端に来たら反射
   if ((ball.p.x < 15) || (ball.p.x > 385)) {
     ball.v.x = -ball.v.x;
-    score++;
   }
   // ボールが上限の端に来たら反射
   // TODO: 下は本来反射しなくてOK
   if ((ball.p.y < 15) || (ball.p.y > 385)) {
     ball.v.y = -ball.v.y;
-    score++;
   }
   // ボールとブロックの衝突判定
   for (const block of blocks) {
@@ -160,6 +158,9 @@ function draw() {
       let w = ball.p.sub(block.p);
       let r = ball.v.reflect(w);
       ball.v = r;
+      // ブロックを消す
+      blocks.splice(blocks.indexOf(block), 1);
+      score++;
     }
   }
 
